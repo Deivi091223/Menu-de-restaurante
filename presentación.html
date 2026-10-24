@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOM Traversing - Restaurante La Casona</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; }
+  .slide { display: none; min-height: 100vh; padding: 36px 60px 80px; max-width: 1100px; margin: 0 auto; }
+  .slide.active { display: block; }
+  h1 { font-size: 2.6rem; margin: 0 0 16px; }
+  h2 { font-size: 1.9rem; margin: 0 0 16px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+  h3 { margin: 14px 0 6px; }
+  p, li { font-size: 1.15rem; line-height: 1.5; }
+  code, pre { font-family: Menlo, Consolas, monospace; }
+  pre { border: 2px solid #000; padding: 12px; font-size: .95rem; line-height: 1.4; overflow-x: auto; margin: 10px 0; }
+  code { border: 1px solid #000; padding: 0 4px; }
+  pre code { border: 0; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 2px solid #000; padding: 6px 10px; font-size: 1rem; text-align: left; vertical-align: top; }
+  .box { border: 2px solid #000; padding: 2px 16px; margin: 12px 0; }
+  .cols { display: flex; gap: 24px; align-items: flex-start; }
+  .cols > * { flex: 1; min-width: 0; }
+  svg { max-width: 100%; height: auto; display: block; margin: 8px auto; }
+  svg text { font-family: Arial, Helvetica, sans-serif; fill: #000; }
+  svg .mono { font-family: Menlo, Consolas, monospace; }
+  .small { font-size: .95rem; }
+  button { background: #fff; color: #000; border: 2px solid #000; font-size: 1rem; padding: 4px 12px; cursor: pointer; }
+  button:hover { background: #000; color: #fff; }
+  #nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid #000;
+         display: flex; justify-content: space-between; align-items: center; padding: 8px 20px; }
+
+  /* ---- Demo (misma estructura del repo La Casona) ---- */
+  .solo-admin { display: none; }
+  body.modo-admin .solo-admin { display: block; }
+  body.modo-admin .solo-cliente { display: none; }
+  #app h3.categoria-titulo { margin: 10px 0 4px; font-size: 1.1rem; }
+  #app .lista-platos { display: flex; flex-direction: column; gap: 6px; }
+  #app .plato { display: grid; grid-template-columns: 1fr auto auto; gap: 2px 14px; align-items: center; border: 2px solid #000; padding: 6px 10px; }
+  #app .plato.editando { border-width: 5px; }
+  #app .plato-nombre { margin: 0; font-size: 1rem; grid-column: 1; }
+  #app .plato-descripcion { margin: 0; font-size: .85rem; grid-column: 1; line-height: 1.2; }
+  #app .plato-precio { grid-column: 2; grid-row: 1 / span 2; font-weight: bold; }
+  #app .plato > div { grid-column: 3; grid-row: 1 / span 2; display: flex; gap: 6px; }
+  #app .solo-admin.acciones-admin { display: none; }
+  body.modo-admin #app .acciones-admin { display: flex; }
+  #app .admin-panel { border: 2px solid #000; padding: 6px 12px; margin-bottom: 10px; }
+  #app .admin-panel h2 { font-size: 1.1rem; border: 0; margin: 0 0 6px; padding: 0; }
+  #app .campo { display: inline-block; margin: 0 8px 6px 0; }
+  #app .campo label { display: block; font-size: .85rem; }
+  #app input[type=text], #app input[type=number], #app select, #app textarea { font-size: .9rem; padding: 3px 6px; border: 2px solid #000; background: #fff; color: #000; }
+  #app .mensaje-admin { margin: 4px 0; font-size: .9rem; min-height: 1.2em; }
+  #app .mensaje-admin.error { font-weight: bold; }
+  #app .pedido { border: 2px solid #000; padding: 6px 12px; margin-top: 10px; }
+  #app .pedido h2 { font-size: 1.1rem; border: 0; margin: 0 0 4px; padding: 0; }
+  #app .pedido p { font-size: .95rem; margin: 4px 0; }
+  #app .lista-pedido { list-style: none; padding: 0; margin: 0; }
+  #app .lista-pedido li { display: flex; gap: 12px; font-size: .95rem; align-items: center; padding: 2px 0; }
+  #app .lista-pedido li span:first-child { flex: 1; }
+  #app .btn-modo { margin-bottom: 8px; }
+  #app .encabezado p { margin: 0 0 6px; font-size: .95rem; }
+  #app .encabezado h1 { font-size: 1.5rem; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ============ 1 ============ -->
+<section class="slide active">
+  <h1>DOM Traversing</h1>
+  <p>Ejemplo: la página <strong>Restaurante La Casona</strong> (repo <code>Menu-de-restaurante</code>): 4 categorías (Entradas, Platos fuertes, Postres, Bebidas), 11 platos, vista de <strong>cliente</strong> (arma su pedido) y de <strong>administrador</strong> (CRUD de platos). Analogía: <strong>el árbol genealógico</strong>.</p>
+
+  <h2>1. ¿Qué es y cuándo lo aplico?</h2>
+  <p><strong>Traversing = moverse de un elemento a otro usando su parentesco</strong> (padre, hijos, hermanos), sin volver a buscarlo desde <code>document</code>.</p>
+  <div class="box">
+    <p><strong>Analogía en La Casona:</strong> un cliente toca el botón <em>Agregar</em> de la "Bandeja paisa". El mesero no recorre todo el restaurante preguntando "¿cuál plato era?": desde ese botón sube a <strong>su plato</strong> (<code>article.plato</code>), como quien sigue su árbol familiar hasta la casa correcta, y desde el plato lee el nombre (su hijo <code>h4</code>) y el precio (su hijo <code>span</code>). <strong>Si ya tengo un elemento, llego a sus parientes desde él.</strong></p>
+  </div>
+  <table>
+    <tr><th>Situación</th><th>Elemento repetido</th><th>Qué pasa</th><th>Herramientas</th></tr>
+    <tr><td>Menú de restaurante</td><td>Plato con nombre y precio</td><td>El botón <em>Agregar</em> suma el plato a una lista de pedido</td><td><code>closest</code>, <code>querySelector</code></td></tr>
+  </table>
+  <p>Hay muchos platos y un botón dentro de cada uno. Desde el botón que recibió el clic necesito llegar a <strong>su plato</strong>, no a otro. Sin traversing tendrías que ponerle un <code>id</code> a cada plato y a cada botón.</p>
+  <pre><code>boton.closest(".plato");   // una línea sirve para todos los platos</code></pre>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="slide">
+  <h2>2. ¿Cómo funciona? El DOM es un árbol genealógico</h2>
+  <p>Estructura real de cada plato en el repo (tomamos como "yo" el botón <strong>Editar</strong>):</p>
+  <svg viewBox="0 0 1100 440" width="1060">
+    <g stroke="#000" stroke-width="2" fill="none">
+      <line x1="390" y1="62" x2="390" y2="105"/>
+      <line x1="390" y1="62" x2="860" y2="105" stroke-dasharray="6 5"/>
+      <line x1="390" y1="145" x2="70" y2="205"/>
+      <line x1="390" y1="145" x2="195" y2="205"/>
+      <line x1="390" y1="145" x2="320" y2="205"/>
+      <line x1="390" y1="145" x2="450" y2="205"/>
+      <line x1="390" y1="145" x2="640" y2="205"/>
+      <line x1="450" y1="245" x2="410" y2="315"/>
+      <line x1="640" y1="245" x2="590" y2="315"/>
+      <line x1="640" y1="245" x2="740" y2="315"/>
+    </g>
+    <g fill="#fff" stroke="#000" stroke-width="2">
+      <rect x="290" y="22" width="200" height="40" rx="6"/>
+      <rect x="300" y="105" width="180" height="40" rx="6"/>
+      <rect x="770" y="105" width="180" height="40" rx="6" stroke-dasharray="6 5"/>
+      <rect x="10" y="205" width="120" height="40" rx="6"/>
+      <rect x="140" y="205" width="110" height="40" rx="6"/>
+      <rect x="260" y="205" width="120" height="40" rx="6"/>
+      <rect x="390" y="205" width="120" height="40" rx="6"/>
+      <rect x="530" y="205" width="220" height="40" rx="6"/>
+      <rect x="340" y="315" width="140" height="40" rx="6"/>
+      <rect x="520" y="315" width="140" height="40" rx="6" stroke-width="6"/>
+      <rect x="680" y="315" width="140" height="40" rx="6"/>
+    </g>
+    <g font-size="13" text-anchor="middle" class="mono">
+      <text x="390" y="47">div.lista-platos</text>
+      <text x="390" y="130">article.plato</text>
+      <text x="860" y="130">article.plato (otro)</text>
+      <text x="70" y="230">h4.plato-nombre</text>
+      <text x="195" y="230">p.plato-desc.</text>
+      <text x="320" y="230">span.plato-precio</text>
+      <text x="450" y="230">div.acc-cliente</text>
+      <text x="640" y="230">div.acciones-admin</text>
+      <text x="410" y="340">btn-agregar</text>
+      <text x="590" y="340" font-weight="bold">btn-editar (yo)</text>
+      <text x="750" y="340">btn-eliminar</text>
+    </g>
+    <g font-size="15">
+      <text x="10" y="390" font-weight="bold">Parentesco de "Editar":</text>
+      <text x="10" y="412">Padre: div.acciones-admin · Abuelo: article.plato · Bisabuelo: div.lista-platos</text>
+      <text x="10" y="434">Hermano: btn-eliminar · Tíos: h4, p, span, div.acciones-cliente · Tío abuelo: otro article.plato</text>
+    </g>
+  </svg>
+  <p class="small">Más arriba: <code>div.lista-platos</code> → <code>section.categoria</code> → <code>section#menu</code> → <code>main</code> → <code>div#app</code>. Dentro de <code>#app</code> cada categoría (Entradas, Platos fuertes, Postres, Bebidas) agrupa sus platos.</p>
+  <p class="small">Si el pariente no existe, el resultado es <code>null</code> (como pedir el hermano de un hijo único).</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="slide">
+  <h2>Subir, bajar y moverse de lado</h2>
+  <p>Con <code>boton</code> = el botón Editar y <code>plato</code> = su <code>article.plato</code>:</p>
+  <table>
+    <tr><th>Dirección</th><th>Propiedad</th><th>Ejemplo del repo</th><th>Resultado</th></tr>
+    <tr><td>Subir ↑ (padre)</td><td><code>parentElement</code></td><td><code>boton.parentElement</code></td><td>div.acciones-admin</td></tr>
+    <tr><td>Subir ↑ (abuelo)</td><td><code>closest("selector")</code></td><td><code>boton.closest(".plato")</code></td><td>el article de ese plato</td></tr>
+    <tr><td>Bajar ↓</td><td><code>children</code></td><td><code>listaPedido.children.length</code></td><td>cuántos &lt;li&gt; hay</td></tr>
+    <tr><td>Bajar ↓ (primer hijo)</td><td><code>firstElementChild</code></td><td><code>plato.firstElementChild</code></td><td>h4.plato-nombre</td></tr>
+    <tr><td>Bajar ↓ (último hijo)</td><td><code>lastElementChild</code></td><td><code>filaTotal.lastElementChild</code></td><td>span.total-valor</td></tr>
+    <tr><td>Bajar ↓ (buscar dentro)</td><td><code>elemento.querySelector()</code></td><td><code>panelAdmin.querySelector('[data-accion="guardar"]')</code></td><td>solo busca dentro del panel</td></tr>
+    <tr><td>De lado → </td><td><code>nextElementSibling</code></td><td><code>nombre.nextElementSibling</code></td><td>p.plato-descripcion</td></tr>
+    <tr><td>De lado ←</td><td><code>previousElementSibling</code></td><td><code>listaPedido.previousElementSibling</code></td><td>p.pedido-vacio</td></tr>
+  </table>
+<pre><code>const nombre      = plato.firstElementChild;        // h4  (hijo mayor)
+const descripcion = nombre.nextElementSibling;      // p   (su hermano)
+const precio      = descripcion.nextElementSibling; // span (hermano del hermano)</code></pre>
+  <div class="box">
+    <p><strong>¿Por qué "Element"?</strong> El DOM también cuenta texto y espacios del HTML como nodos ("fantasmas" del árbol). <code>firstChild</code>, <code>childNodes</code>, <code>parentNode</code> y <code>nextSibling</code> pueden devolver un salto de línea; las versiones <strong>Element</strong> solo cuentan las etiquetas ("personas").</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="slide">
+  <h2>Delegación de eventos y CRUD</h2>
+  <p><strong>Un solo <code>addEventListener</code> en el contenedor <code>#app</code>.</strong> Desde <code>e.target</code> se sube hasta el botón y hasta su plato.</p>
+  <div class="box">
+    <p><strong>Analogía:</strong> un solo mesero en la entrada atiende a todas las mesas: mira quién lo llamó y va a la mesa correcta.</p>
+  </div>
+  <pre><code>app.addEventListener("click", (e) => {
+  const boton = e.target.closest("button[data-accion]"); // ¿tocó un botón?
+  if (!boton) return;
+
+  const plato = boton.closest(".plato");   // su fila (null si no está en un plato)
+
+  switch (boton.dataset.accion) {
+    case "alternar-admin": alternarModoAdmin(boton); break; // cliente ↔ administrador
+    case "guardar":  guardarPlato(); break;               // C (crear) o U (actualizar)
+    case "cancelar": limpiarFormulario(); break;
+    case "editar":   cargarEnFormulario(plato); break;    // U: llena el formulario
+    case "eliminar": eliminarPlato(plato); break;         // D: plato.remove()
+    case "agregar":  agregarAlPedido(plato); break;       // suma el plato al pedido
+    case "quitar":   boton.closest("li").remove(); break; // del botón a su &lt;li&gt;
+    case "vaciar":   listaPedido.replaceChildren(); break;
+    case "confirmar": /* avisa y vacía el pedido */ break;
+  }
+});</code></pre>
+  <table>
+    <tr><th>CRUD en La Casona</th><th>Dónde / traversing usado</th></tr>
+    <tr><td>Mostrar (Read)</td><td>El <code>article.plato</code> ya está dibujado dentro de su categoría</td></tr>
+    <tr><td>Crear (Create)</td><td>Panel del administrador → <code>crearPlato()</code> arma el article y lo agrega a <code>.categoria[...] .lista-platos</code></td></tr>
+    <tr><td>Editar (Update)</td><td><code>btn-editar</code> → <code>closest(".plato")</code> → <code>firstElementChild</code> (h4) → <code>nextElementSibling</code> (p) → <code>nextElementSibling</code> (span)</td></tr>
+    <tr><td>Eliminar (Delete)</td><td><code>btn-eliminar</code> → <code>boton.closest(".plato").remove()</code></td></tr>
+  </table>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="slide">
+  <h2>Demo en vivo (código del repo La Casona)</h2>
+  <p class="small">Cliente: <em>Agregar</em> al pedido y <em>Quitar</em>. Administrador: <em>Editar</em>, <em>Eliminar</em> y el formulario para crear.</p>
+  <div id="app">
+    <header class="encabezado">
+      <h1 class="titulo">La Casona</h1>
+      <p class="eslogan">Cocina tradicional desde 1985</p>
+      <button type="button" class="btn-modo" data-accion="alternar-admin">Entrar como administrador</button>
+    </header>
+
+    <section id="admin" class="admin-panel solo-admin">
+      <h2 id="admin-titulo">Agregar plato</h2>
+      <input type="hidden" id="plato-id">
+      <div class="campo"><label for="plato-nombre-input">Nombre</label><input type="text" id="plato-nombre-input"></div>
+      <div class="campo"><label for="plato-categoria-input">Categoría</label>
+        <select id="plato-categoria-input">
+          <option value="entradas">Entradas</option><option value="fuertes">Platos fuertes</option>
+          <option value="postres">Postres</option><option value="bebidas">Bebidas</option>
+        </select></div>
+      <div class="campo"><label for="plato-precio-input">Precio</label><input type="number" id="plato-precio-input" min="0" step="500"></div>
+      <div class="campo"><label for="plato-descripcion-input">Descripción</label><textarea id="plato-descripcion-input" rows="1"></textarea></div>
+      <p class="mensaje-admin" id="mensaje-admin" role="status"></p>
+      <button type="button" data-accion="cancelar">Cancelar</button>
+      <button type="button" data-accion="guardar">Guardar plato</button>
+    </section>
+
+    <section id="menu" class="menu">
+      <section id="entradas" class="categoria" data-categoria="entradas">
+        <h3 class="categoria-titulo">Entradas</h3>
+        <div class="lista-platos">
+          <article class="plato" data-id="1" data-categoria="entradas" data-precio="12000">
+            <h4 class="plato-nombre">Empanadas</h4>
+            <p class="plato-descripcion">Tres empanadas de carne con ají casero.</p>
+            <span class="plato-precio">$12.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="2" data-categoria="entradas" data-precio="15000">
+            <h4 class="plato-nombre">Patacones con hogao</h4>
+            <p class="plato-descripcion">Plátano verde crocante con hogao tradicional.</p>
+            <span class="plato-precio">$15.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="3" data-categoria="entradas" data-precio="14000">
+            <h4 class="plato-nombre">Sopa de verduras</h4>
+            <p class="plato-descripcion">Sopa del día con verduras frescas.</p>
+            <span class="plato-precio">$14.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+        </div>
+      </section>
+      <section id="fuertes" class="categoria" data-categoria="fuertes">
+        <h3 class="categoria-titulo">Platos fuertes</h3>
+        <div class="lista-platos">
+          <article class="plato" data-id="4" data-categoria="fuertes" data-precio="38000">
+            <h4 class="plato-nombre">Bandeja paisa</h4>
+            <p class="plato-descripcion">Frijoles, arroz, carne molida, chicharrón, huevo y aguacate.</p>
+            <span class="plato-precio">$38.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="5" data-categoria="fuertes" data-precio="42000">
+            <h4 class="plato-nombre">Lomo al vino</h4>
+            <p class="plato-descripcion">Lomo de res en salsa de vino tinto con papas.</p>
+            <span class="plato-precio">$42.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="6" data-categoria="fuertes" data-precio="36000">
+            <h4 class="plato-nombre">Trucha a la plancha</h4>
+            <p class="plato-descripcion">Trucha con ensalada y arroz con coco.</p>
+            <span class="plato-precio">$36.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+        </div>
+      </section>
+      <section id="postres" class="categoria" data-categoria="postres">
+        <h3 class="categoria-titulo">Postres</h3>
+        <div class="lista-platos">
+          <article class="plato" data-id="7" data-categoria="postres" data-precio="10000">
+            <h4 class="plato-nombre">Postre de natas</h4>
+            <p class="plato-descripcion">Receta tradicional de la abuela.</p>
+            <span class="plato-precio">$10.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="8" data-categoria="postres" data-precio="12000">
+            <h4 class="plato-nombre">Tres leches</h4>
+            <p class="plato-descripcion">Bizcocho húmedo con crema y canela.</p>
+            <span class="plato-precio">$12.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+        </div>
+      </section>
+      <section id="bebidas" class="categoria" data-categoria="bebidas">
+        <h3 class="categoria-titulo">Bebidas</h3>
+        <div class="lista-platos">
+          <article class="plato" data-id="9" data-categoria="bebidas" data-precio="7000">
+            <h4 class="plato-nombre">Limonada de coco</h4>
+            <p class="plato-descripcion">Refrescante y cremosa.</p>
+            <span class="plato-precio">$7.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="10" data-categoria="bebidas" data-precio="6000">
+            <h4 class="plato-nombre">Jugo natural</h4>
+            <p class="plato-descripcion">Mora, lulo o maracuyá.</p>
+            <span class="plato-precio">$6.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+          <article class="plato" data-id="11" data-categoria="bebidas" data-precio="4000">
+            <h4 class="plato-nombre">Café tinto</h4>
+            <p class="plato-descripcion">Café colombiano recién preparado.</p>
+            <span class="plato-precio">$4.000</span>
+            <div class="acciones-cliente solo-cliente"><button type="button" class="btn-agregar" data-accion="agregar">Agregar</button></div>
+            <div class="acciones-admin solo-admin"><button type="button" class="btn-editar" data-accion="editar">Editar</button><button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button></div>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section id="pedido" class="pedido solo-cliente">
+      <h2>Mi pedido</h2>
+      <p class="pedido-vacio">Aún no has agregado platos.</p>
+      <ul class="lista-pedido"></ul>
+      <p class="pedido-total"><span class="total-texto">Total:</span> <span class="total-valor">$0</span></p>
+      <button type="button" data-accion="vaciar">Vaciar pedido</button>
+      <button type="button" data-accion="confirmar">Confirmar pedido</button>
+    </section>
+  </div>
+</section>
+
+<div id="nav">
+  <button id="prev">← Anterior</button>
+  <span id="count"></span>
+  <button id="next">Siguiente →</button>
+</div>
+
+<script>
+  // ---- Navegación de la presentación ----
+  (function () {
+    const slides = document.querySelectorAll(".slide");
+    const count = document.getElementById("count");
+    let actual = 0;
+    function mostrar(n) {
+      actual = Math.max(0, Math.min(slides.length - 1, n));
+      slides.forEach((s, i) => s.classList.toggle("active", i === actual));
+      count.textContent = (actual + 1) + " / " + slides.length;
+      window.scrollTo(0, 0);
+    }
+    document.getElementById("prev").addEventListener("click", () => mostrar(actual - 1));
+    document.getElementById("next").addEventListener("click", () => mostrar(actual + 1));
+    document.addEventListener("keydown", (e) => {
+      if (e.target.closest("input, textarea, select")) return;
+      if (e.key === "ArrowRight" || e.key === "PageDown") mostrar(actual + 1);
+      if (e.key === "ArrowLeft" || e.key === "PageUp") mostrar(actual - 1);
+    });
+    mostrar(0);
+  })();
+</script>
+
+<script>
+/* ===== Demo: adaptado de script.js de Deivi091223/Menu-de-restaurante ===== */
+(function () {
+  const app = document.getElementById("app");
+  const campoId = document.getElementById("plato-id");
+  const campoNombre = document.getElementById("plato-nombre-input");
+  const campoCategoria = document.getElementById("plato-categoria-input");
+  const campoPrecio = document.getElementById("plato-precio-input");
+  const campoDescripcion = document.getElementById("plato-descripcion-input");
+  const tituloAdmin = document.getElementById("admin-titulo");
+  const mensajeAdmin = document.getElementById("mensaje-admin");
+  const panelAdmin = document.getElementById("admin");
+  const listaPedido = document.querySelector(".lista-pedido");
+
+  let siguienteId = 1;
+  document.querySelectorAll(".plato").forEach((plato) => {
+    const id = Number(plato.dataset.id);
+    if (id >= siguienteId) siguienteId = id + 1;
+  });
+
+  function formatearPrecio(numero) { return "$" + Number(numero).toLocaleString("es-CO"); }
+
+  function mostrarMensaje(texto, tipo) {
+    mensajeAdmin.textContent = texto;
+    mensajeAdmin.className = "mensaje-admin" + (tipo ? " " + tipo : "");
+  }
+
+  function limpiarFormulario() {
+    campoId.value = "";
+    campoNombre.value = "";
+    campoCategoria.value = "entradas";
+    campoPrecio.value = "";
+    campoDescripcion.value = "";
+    tituloAdmin.textContent = "Agregar plato";
+    panelAdmin.querySelector('[data-accion="guardar"]').textContent = "Guardar plato";
+    const enEdicion = document.querySelector(".plato.editando");
+    if (enEdicion) enEdicion.classList.remove("editando");
+  }
+
+  function crearBoton(clase, accion, texto) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = clase;
+    b.dataset.accion = accion;
+    b.textContent = texto;
+    return b;
+  }
+
+  // CREATE
+  function crearPlato(datos) {
+    const plato = document.createElement("article");
+    plato.className = "plato";
+    plato.dataset.id = siguienteId++;
+    plato.dataset.categoria = datos.categoria;
+    plato.dataset.precio = datos.precio;
+
+    const nombre = document.createElement("h4");
+    nombre.className = "plato-nombre";
+    nombre.textContent = datos.nombre;
+    const descripcion = document.createElement("p");
+    descripcion.className = "plato-descripcion";
+    descripcion.textContent = datos.descripcion;
+    const precio = document.createElement("span");
+    precio.className = "plato-precio";
+    precio.textContent = formatearPrecio(datos.precio);
+
+    const accionesCliente = document.createElement("div");
+    accionesCliente.className = "acciones-cliente solo-cliente";
+    accionesCliente.appendChild(crearBoton("btn-agregar", "agregar", "Agregar"));
+
+    const accionesAdmin = document.createElement("div");
+    accionesAdmin.className = "acciones-admin solo-admin";
+    accionesAdmin.append(crearBoton("btn-editar", "editar", "Editar"), crearBoton("btn-eliminar", "eliminar", "Eliminar"));
+
+    plato.append(nombre, descripcion, precio, accionesCliente, accionesAdmin);
+    document.querySelector('.categoria[data-categoria="' + datos.categoria + '"] .lista-platos').appendChild(plato);
+    return plato;
+  }
+
+  // READ hacia el formulario (traversing: article → h4 → p → span)
+  function cargarEnFormulario(plato) {
+    const nombre = plato.firstElementChild;
+    const descripcion = nombre.nextElementSibling;
+
+    campoId.value = plato.dataset.id;
+    campoNombre.value = nombre.textContent;
+    campoDescripcion.value = descripcion.textContent;
+    campoPrecio.value = plato.dataset.precio;
+    campoCategoria.value = plato.dataset.categoria;
+    tituloAdmin.textContent = "Editar plato";
+    panelAdmin.querySelector('[data-accion="guardar"]').textContent = "Guardar cambios";
+
+    const anterior = document.querySelector(".plato.editando");
+    if (anterior) anterior.classList.remove("editando");
+    plato.classList.add("editando");
+
+    mostrarMensaje("Editando: " + nombre.textContent, "");
+    campoNombre.focus();
+  }
+
+  // UPDATE
+  function actualizarPlato(plato, datos) {
+    const nombre = plato.firstElementChild;
+    const descripcion = nombre.nextElementSibling;
+    const precio = descripcion.nextElementSibling;
+
+    nombre.textContent = datos.nombre;
+    descripcion.textContent = datos.descripcion;
+    precio.textContent = formatearPrecio(datos.precio);
+    plato.dataset.precio = datos.precio;
+
+    if (plato.dataset.categoria !== datos.categoria) {
+      plato.dataset.categoria = datos.categoria;
+      document.querySelector('.categoria[data-categoria="' + datos.categoria + '"] .lista-platos').appendChild(plato);
+    }
+  }
+
+  function guardarPlato() {
+    const datos = {
+      nombre: campoNombre.value.trim(),
+      categoria: campoCategoria.value,
+      precio: Number(campoPrecio.value),
+      descripcion: campoDescripcion.value.trim()
+    };
+    if (datos.nombre === "") { mostrarMensaje("Escribe el nombre del plato.", "error"); campoNombre.focus(); return; }
+    if (!(datos.precio > 0)) { mostrarMensaje("El precio debe ser mayor que 0.", "error"); campoPrecio.focus(); return; }
+    if (datos.descripcion === "") { mostrarMensaje("Escribe una descripción corta.", "error"); campoDescripcion.focus(); return; }
+
+    if (campoId.value === "") {
+      crearPlato(datos);
+      limpiarFormulario();
+      mostrarMensaje("Plato agregado al menú.", "exito");
+    } else {
+      const plato = document.querySelector('.plato[data-id="' + campoId.value + '"]');
+      actualizarPlato(plato, datos);
+      limpiarFormulario();
+      mostrarMensaje("Plato actualizado.", "exito");
+    }
+  }
+
+  // DELETE
+  function eliminarPlato(plato) {
+    const nombre = plato.firstElementChild.textContent;
+    if (!confirm("¿Eliminar \"" + nombre + "\" del menú?")) return;
+    if (plato.dataset.id === campoId.value) limpiarFormulario();
+    plato.remove();
+    mostrarMensaje("Plato eliminado.", "exito");
+  }
+
+  function alternarModoAdmin(boton) {
+    const esAdmin = document.body.classList.toggle("modo-admin");
+    boton.textContent = esAdmin ? "Volver a vista de cliente" : "Entrar como administrador";
+    limpiarFormulario();
+    mostrarMensaje("", "");
+  }
+
+  function actualizarPedido() {
+    let total = 0;
+    for (const item of listaPedido.children) total += Number(item.dataset.precio);
+
+    const mensajeVacio = listaPedido.previousElementSibling; // p.pedido-vacio
+    const filaTotal = listaPedido.nextElementSibling;        // p.pedido-total
+    const valorTotal = filaTotal.lastElementChild;           // span.total-valor
+
+    valorTotal.textContent = formatearPrecio(total);
+    mensajeVacio.hidden = listaPedido.children.length > 0;
+  }
+
+  function agregarAlPedido(plato) {
+    const item = document.createElement("li");
+    item.dataset.precio = plato.dataset.precio;
+    const textoNombre = document.createElement("span");
+    textoNombre.textContent = plato.firstElementChild.textContent;
+    const textoPrecio = document.createElement("span");
+    textoPrecio.textContent = formatearPrecio(plato.dataset.precio);
+    item.append(textoNombre, textoPrecio, crearBoton("btn-quitar", "quitar", "Quitar"));
+    listaPedido.appendChild(item);
+    actualizarPedido();
+  }
+
+  // UN SOLO addEventListener (delegación de eventos)
+  app.addEventListener("click", (e) => {
+    const boton = e.target.closest("button[data-accion]");
+    if (!boton) return;
+    const plato = boton.closest(".plato");
+
+    switch (boton.dataset.accion) {
+      case "alternar-admin": alternarModoAdmin(boton); break;
+      case "guardar": guardarPlato(); break;
+      case "cancelar": limpiarFormulario(); mostrarMensaje("", ""); break;
+      case "editar": cargarEnFormulario(plato); break;
+      case "eliminar": eliminarPlato(plato); break;
+      case "agregar": agregarAlPedido(plato); break;
+      case "quitar": boton.closest("li").remove(); actualizarPedido(); break;
+      case "vaciar": listaPedido.replaceChildren(); actualizarPedido(); break;
+      case "confirmar":
+        if (listaPedido.children.length === 0) {
+          alert("Tu pedido está vacío.");
+        } else {
+          alert("¡Pedido confirmado! Gracias por elegir La Casona.");
+          listaPedido.replaceChildren();
+          actualizarPedido();
+        }
+        break;
+    }
+  });
+
+  actualizarPedido();
+})();
+</script>
+</body>
+</html>
