@@ -1,0 +1,459 @@
+/* =========================================================
+   Restaurante La Casona — Estilos
+   Estilo clásico: tonos vino, crema y dorado, letra con serifa.
+   ========================================================= */
+
+/* ---------- Colores y tipografía (variables) ---------- */
+:root {
+    --vino: #6b1e2e;
+    --vino-oscuro: #4a1420;
+    --dorado: #b8935a;
+    --crema: #faf6ef;
+    --blanco: #ffffff;
+    --texto: #3a2e2a;
+    --gris: #7a6e68;
+    --borde: #e3d8c8;
+
+    /* Nuevos: colores para el modo administrador */
+    --error: #a12622;
+    --exito: #2f6b3f;
+
+    --fuente-titulos: Georgia, "Times New Roman", serif;
+    --fuente-texto: "Segoe UI", Arial, sans-serif;
+}
+
+/* ---------- Reset básico ---------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--fuente-texto);
+    background-color: var(--crema);
+    color: var(--texto);
+    line-height: 1.6;
+}
+
+/* =========================================================
+   VISTA CLIENTE / VISTA ADMINISTRADOR
+   JS solo tendrá que poner o quitar la clase "modo-admin" en <body>.
+   - .solo-admin   → visible únicamente en modo administrador
+   - .solo-cliente → visible únicamente en modo cliente
+   ========================================================= */
+.solo-admin {
+    display: none;
+}
+
+body.modo-admin .solo-admin {
+    display: block;
+}
+
+body.modo-admin .solo-cliente {
+    display: none;
+}
+
+/* ---------- Encabezado ---------- */
+.encabezado {
+    background-color: var(--vino);
+    color: var(--crema);
+    text-align: center;
+    padding: 40px 20px 0;
+    border-bottom: 4px solid var(--dorado);
+}
+
+.titulo {
+    font-family: var(--fuente-titulos);
+    font-size: 3rem;
+    font-weight: normal;
+    letter-spacing: 3px;
+}
+
+.eslogan {
+    font-family: var(--fuente-titulos);
+    font-style: italic;
+    color: var(--dorado);
+    margin-bottom: 20px;
+}
+
+/* Botón para cambiar de cliente a administrador */
+.btn-modo {
+    background-color: transparent;
+    color: var(--crema);
+    border: 1px solid var(--dorado);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+}
+
+.btn-modo:hover {
+    background-color: var(--dorado);
+    color: var(--vino-oscuro);
+}
+
+/* En modo administrador el encabezado cambia de tono para que se note */
+body.modo-admin .encabezado {
+    background-color: var(--vino-oscuro);
+}
+
+/* Menú de navegación */
+.menu-navegacion ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.menu-navegacion a {
+    display: block;
+    padding: 12px 20px;
+    color: var(--crema);
+    text-decoration: none;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.menu-navegacion a:hover {
+    color: var(--dorado);
+}
+
+/* ---------- Contenedor principal ---------- */
+.contenedor {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Títulos de sección (Nuestro menú, Mi pedido) */
+.seccion-titulo {
+    font-family: var(--fuente-titulos);
+    font-weight: normal;
+    font-size: 2.2rem;
+    color: var(--vino);
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Línea dorada decorativa debajo del título */
+.seccion-titulo::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 2px;
+    background-color: var(--dorado);
+    margin: 10px auto 0;
+}
+
+/* ---------- Panel de administrador (formulario CRUD) ---------- */
+.admin-panel {
+    background-color: var(--blanco);
+    border: 1px solid var(--borde);
+    border-top: 4px solid var(--dorado);
+    padding: 30px;
+    max-width: 700px;
+    margin: 0 auto 50px;
+}
+
+/* El panel es una cuadrícula de 2 columnas (se ve solo en modo admin) */
+body.modo-admin .admin-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+}
+
+/* Elementos que ocupan las dos columnas */
+.admin-panel .seccion-titulo,
+.admin-panel .campo-ancho,
+.admin-panel .mensaje-admin,
+.admin-panel .admin-acciones {
+    grid-column: 1 / -1;
+}
+
+.admin-panel .seccion-titulo {
+    margin-bottom: 10px;
+}
+
+.campo label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--gris);
+    margin-bottom: 4px;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--borde);
+    background-color: var(--crema);
+    color: var(--texto);
+    font-family: var(--fuente-texto);
+    font-size: 1rem;
+}
+
+.campo textarea {
+    resize: vertical;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    outline: 2px solid var(--dorado);
+    outline-offset: 1px;
+}
+
+/* Mensaje de error o confirmación (JS cambia el texto y la clase) */
+.mensaje-admin {
+    min-height: 1.4em;
+    font-size: 0.9rem;
+    color: var(--gris);
+}
+
+.mensaje-admin.error {
+    color: var(--error);
+}
+
+.mensaje-admin.exito {
+    color: var(--exito);
+}
+
+.admin-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ---------- Categorías del menú ---------- */
+.categoria {
+    margin-bottom: 40px;
+}
+
+.categoria-titulo {
+    font-family: var(--fuente-titulos);
+    font-weight: normal;
+    font-size: 1.6rem;
+    color: var(--vino-oscuro);
+    border-bottom: 1px solid var(--borde);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+}
+
+/* Cuadrícula de platos */
+.lista-platos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* ---------- Tarjeta de cada plato ---------- */
+.plato {
+    background-color: var(--blanco);
+    border: 1px solid var(--borde);
+    border-top: 3px solid var(--dorado);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Plato que se está editando (JS pone/quita esta clase) */
+.plato.editando {
+    border-color: var(--vino);
+    border-top-color: var(--vino);
+    background-color: #fdf3f0;
+    outline: 2px solid var(--vino);
+}
+
+.plato-nombre {
+    font-family: var(--fuente-titulos);
+    font-size: 1.25rem;
+    font-weight: normal;
+    color: var(--vino);
+    margin-bottom: 6px;
+}
+
+.plato-descripcion {
+    color: var(--gris);
+    font-size: 0.95rem;
+    flex-grow: 1; /* empuja el precio y el botón hacia abajo */
+    margin-bottom: 12px;
+}
+
+.plato-precio {
+    font-family: var(--fuente-titulos);
+    font-size: 1.15rem;
+    color: var(--texto);
+    margin-bottom: 12px;
+}
+
+/* Contenedor de botones de cada plato */
+.acciones-admin {
+    border-top: 1px dotted var(--borde);
+    padding-top: 12px;
+}
+
+body.modo-admin .acciones-admin {
+    display: flex;
+    gap: 10px;
+}
+
+/* ---------- Botones ---------- */
+button {
+    font-family: var(--fuente-texto);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border: 1px solid var(--vino);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--dorado);
+    outline-offset: 2px;
+}
+
+.btn-agregar,
+.btn-confirmar,
+.btn-guardar {
+    background-color: var(--vino);
+    color: var(--crema);
+}
+
+.btn-agregar:hover,
+.btn-confirmar:hover,
+.btn-guardar:hover {
+    background-color: var(--vino-oscuro);
+}
+
+.btn-vaciar,
+.btn-cancelar,
+.btn-editar {
+    background-color: transparent;
+    color: var(--vino);
+}
+
+.btn-vaciar:hover,
+.btn-cancelar:hover,
+.btn-editar:hover {
+    background-color: var(--vino);
+    color: var(--crema);
+}
+
+/* Botones de cada plato en modo admin: ocupan el mismo ancho */
+.btn-editar,
+.btn-eliminar {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+}
+
+/* Eliminar usa rojo para avisar que es una acción delicada */
+.btn-eliminar {
+    background-color: transparent;
+    color: var(--error);
+    border-color: var(--error);
+}
+
+.btn-eliminar:hover {
+    background-color: var(--error);
+    color: var(--blanco);
+}
+
+/* Botón "Quitar" que el JS puede crear dentro de cada <li> */
+.btn-quitar {
+    background-color: transparent;
+    color: var(--gris);
+    border: 1px solid var(--borde);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+}
+
+.btn-quitar:hover {
+    color: var(--vino);
+    border-color: var(--vino);
+}
+
+/* ---------- Sección del pedido ---------- */
+.pedido {
+    background-color: var(--blanco);
+    border: 1px solid var(--borde);
+    border-top: 4px solid var(--vino);
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.pedido-vacio {
+    text-align: center;
+    font-style: italic;
+    color: var(--gris);
+    margin-bottom: 20px;
+}
+
+.lista-pedido {
+    list-style: none;
+    margin-bottom: 20px;
+}
+
+/* Cada plato agregado al pedido (lo crea el JS) */
+.lista-pedido li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--borde);
+}
+
+.pedido-total {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--fuente-titulos);
+    font-size: 1.4rem;
+    color: var(--vino);
+    border-top: 2px solid var(--dorado);
+    padding-top: 15px;
+    margin-bottom: 25px;
+}
+
+.pedido-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ---------- Pie de página ---------- */
+.pie {
+    background-color: var(--vino-oscuro);
+    color: var(--crema);
+    text-align: center;
+    padding: 25px 20px;
+    font-size: 0.9rem;
+    margin-top: 40px;
+}
+
+/* ---------- Celulares ---------- */
+@media (max-width: 600px) {
+    .titulo {
+        font-size: 2.2rem;
+    }
+
+    .pedido,
+    .admin-panel {
+        padding: 20px;
+    }
+
+    /* El formulario pasa a una sola columna */
+    body.modo-admin .admin-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .pedido-acciones,
+    .admin-acciones {
+        flex-direction: column;
+    }
+}

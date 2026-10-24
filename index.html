@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurante La Casona</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!--
+        CONTENEDOR ÚNICO #app
+        Aquí se pondrá el ÚNICO addEventListener (delegación de eventos).
+        Todos los botones tienen data-accion para saber qué hacer:
+          alternar-admin | guardar | cancelar | editar | eliminar |
+          agregar | quitar | vaciar | confirmar
+    -->
+    <div id="app">
+
+        <!-- ===================== ENCABEZADO ===================== -->
+        <header class="encabezado">
+            <h1 class="titulo">La Casona</h1>
+            <p class="eslogan">Cocina tradicional desde 1985</p>
+
+            <!-- Botón que cambiará entre vista de cliente y de administrador -->
+            <button type="button" class="btn-modo" data-accion="alternar-admin">
+                Entrar como administrador
+            </button>
+
+            <nav class="menu-navegacion">
+                <ul>
+                    <li><a href="#entradas">Entradas</a></li>
+                    <li><a href="#fuertes">Platos fuertes</a></li>
+                    <li><a href="#postres">Postres</a></li>
+                    <li><a href="#bebidas">Bebidas</a></li>
+                    <!-- solo-cliente: se oculta en modo administrador -->
+                    <li class="solo-cliente"><a href="#pedido">Mi pedido</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="contenedor">
+
+            <!-- ===================== PANEL DE ADMINISTRADOR ===================== -->
+            <!--
+                Solo se ve cuando <body> tiene la clase "modo-admin" (la pondrá JS).
+                Este formulario sirve para CREAR un plato nuevo y para EDITAR uno existente.
+                No usamos <form> para no necesitar un segundo listener de "submit".
+            -->
+            <section id="admin" class="admin-panel solo-admin">
+                <h2 class="seccion-titulo" id="admin-titulo">Agregar plato</h2>
+
+                <!-- Guarda el id del plato que se está editando (vacío = plato nuevo) -->
+                <input type="hidden" id="plato-id">
+
+                <div class="campo">
+                    <label for="plato-nombre-input">Nombre</label>
+                    <input type="text" id="plato-nombre-input" placeholder="Ej: Ajiaco santafereño">
+                </div>
+
+                <div class="campo">
+                    <label for="plato-categoria-input">Categoría</label>
+                    <select id="plato-categoria-input">
+                        <option value="entradas">Entradas</option>
+                        <option value="fuertes">Platos fuertes</option>
+                        <option value="postres">Postres</option>
+                        <option value="bebidas">Bebidas</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="plato-precio-input">Precio (COP)</label>
+                    <input type="number" id="plato-precio-input" min="0" step="500" placeholder="Ej: 25000">
+                </div>
+
+                <div class="campo campo-ancho">
+                    <label for="plato-descripcion-input">Descripción</label>
+                    <textarea id="plato-descripcion-input" rows="3" placeholder="Ej: Sopa de papa con pollo, mazorca y alcaparras."></textarea>
+                </div>
+
+                <!-- Aquí JS mostrará errores o confirmaciones (con textContent) -->
+                <p class="mensaje-admin" id="mensaje-admin" role="status"></p>
+
+                <div class="admin-acciones">
+                    <button type="button" class="btn-cancelar" data-accion="cancelar">Cancelar</button>
+                    <button type="button" class="btn-guardar" data-accion="guardar">Guardar plato</button>
+                </div>
+            </section>
+
+            <!-- ===================== MENÚ ===================== -->
+            <!--
+                Estructura de cada plato (pensada para DOM Traversing):
+
+                article.plato  (data-id, data-categoria, data-precio)
+                  ├── h4.plato-nombre
+                  ├── p.plato-descripcion
+                  ├── span.plato-precio
+                  ├── div.acciones-cliente   (solo-cliente)
+                  │     └── button.btn-agregar
+                  └── div.acciones-admin     (solo-admin)
+                        ├── button.btn-editar
+                        └── button.btn-eliminar
+
+                Desde cualquier botón: boton.closest(".plato") llega al article.
+                Desde el article: firstElementChild = nombre,
+                nombre.nextElementSibling = descripción, y así sucesivamente.
+                Cada plato tiene su propio CRUD:
+                  - Mostrar  → el article ya renderizado
+                  - Crear    → el formulario del panel admin
+                  - Editar   → btn-editar (llena el formulario con los datos del plato)
+                  - Eliminar → btn-eliminar (quita el article)
+            -->
+            <section id="menu" class="menu">
+                <h2 class="seccion-titulo">Nuestro menú</h2>
+
+                <!-- Categoría: Entradas -->
+                <section id="entradas" class="categoria" data-categoria="entradas">
+                    <h3 class="categoria-titulo">Entradas</h3>
+                    <div class="lista-platos">
+
+                        <article class="plato" data-id="1" data-categoria="entradas" data-precio="12000">
+                            <h4 class="plato-nombre">Empanadas</h4>
+                            <p class="plato-descripcion">Tres empanadas de carne con ají casero.</p>
+                            <span class="plato-precio">$12.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="2" data-categoria="entradas" data-precio="15000">
+                            <h4 class="plato-nombre">Patacones con hogao</h4>
+                            <p class="plato-descripcion">Plátano verde crocante con hogao tradicional.</p>
+                            <span class="plato-precio">$15.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="3" data-categoria="entradas" data-precio="14000">
+                            <h4 class="plato-nombre">Sopa de verduras</h4>
+                            <p class="plato-descripcion">Sopa del día con verduras frescas.</p>
+                            <span class="plato-precio">$14.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                    </div>
+                </section>
+
+                <!-- Categoría: Platos fuertes -->
+                <section id="fuertes" class="categoria" data-categoria="fuertes">
+                    <h3 class="categoria-titulo">Platos fuertes</h3>
+                    <div class="lista-platos">
+
+                        <article class="plato" data-id="4" data-categoria="fuertes" data-precio="38000">
+                            <h4 class="plato-nombre">Bandeja paisa</h4>
+                            <p class="plato-descripcion">Frijoles, arroz, carne molida, chicharrón, huevo y aguacate.</p>
+                            <span class="plato-precio">$38.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="5" data-categoria="fuertes" data-precio="42000">
+                            <h4 class="plato-nombre">Lomo al vino</h4>
+                            <p class="plato-descripcion">Lomo de res en salsa de vino tinto con papas.</p>
+                            <span class="plato-precio">$42.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="6" data-categoria="fuertes" data-precio="36000">
+                            <h4 class="plato-nombre">Trucha a la plancha</h4>
+                            <p class="plato-descripcion">Trucha con ensalada y arroz con coco.</p>
+                            <span class="plato-precio">$36.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                    </div>
+                </section>
+
+                <!-- Categoría: Postres -->
+                <section id="postres" class="categoria" data-categoria="postres">
+                    <h3 class="categoria-titulo">Postres</h3>
+                    <div class="lista-platos">
+
+                        <article class="plato" data-id="7" data-categoria="postres" data-precio="10000">
+                            <h4 class="plato-nombre">Postre de natas</h4>
+                            <p class="plato-descripcion">Receta tradicional de la abuela.</p>
+                            <span class="plato-precio">$10.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="8" data-categoria="postres" data-precio="12000">
+                            <h4 class="plato-nombre">Tres leches</h4>
+                            <p class="plato-descripcion">Bizcocho húmedo con crema y canela.</p>
+                            <span class="plato-precio">$12.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                    </div>
+                </section>
+
+                <!-- Categoría: Bebidas -->
+                <section id="bebidas" class="categoria" data-categoria="bebidas">
+                    <h3 class="categoria-titulo">Bebidas</h3>
+                    <div class="lista-platos">
+
+                        <article class="plato" data-id="9" data-categoria="bebidas" data-precio="7000">
+                            <h4 class="plato-nombre">Limonada de coco</h4>
+                            <p class="plato-descripcion">Refrescante y cremosa.</p>
+                            <span class="plato-precio">$7.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="10" data-categoria="bebidas" data-precio="6000">
+                            <h4 class="plato-nombre">Jugo natural</h4>
+                            <p class="plato-descripcion">Mora, lulo o maracuyá.</p>
+                            <span class="plato-precio">$6.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                        <article class="plato" data-id="11" data-categoria="bebidas" data-precio="4000">
+                            <h4 class="plato-nombre">Café tinto</h4>
+                            <p class="plato-descripcion">Café colombiano recién preparado.</p>
+                            <span class="plato-precio">$4.000</span>
+                            <div class="acciones-cliente solo-cliente">
+                                <button type="button" class="btn-agregar" data-accion="agregar">Agregar</button>
+                            </div>
+                            <div class="acciones-admin solo-admin">
+                                <button type="button" class="btn-editar" data-accion="editar">Editar</button>
+                                <button type="button" class="btn-eliminar" data-accion="eliminar">Eliminar</button>
+                            </div>
+                        </article>
+
+                    </div>
+                </section>
+            </section>
+
+            <!-- ===================== PEDIDO (solo cliente) ===================== -->
+            <!--
+                JS agregará un <li> por cada plato elegido dentro de ul.lista-pedido.
+                El total está en span.total-valor, hermano de span.total-texto.
+            -->
+            <section id="pedido" class="pedido solo-cliente">
+                <h2 class="seccion-titulo">Mi pedido</h2>
+
+                <p class="pedido-vacio">Aún no has agregado platos.</p>
+
+                <ul class="lista-pedido">
+                    <!-- Los platos se agregan aquí con JavaScript -->
+                </ul>
+
+                <p class="pedido-total">
+                    <span class="total-texto">Total:</span>
+                    <span class="total-valor">$0</span>
+                </p>
+
+                <div class="pedido-acciones">
+                    <button type="button" class="btn-vaciar" data-accion="vaciar">Vaciar pedido</button>
+                    <button type="button" class="btn-confirmar" data-accion="confirmar">Confirmar pedido</button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ===================== PIE DE PÁGINA ===================== -->
+        <footer class="pie">
+            <p>La Casona · Calle 10 # 40-20 · Medellín</p>
+            <p>Lunes a domingo · 12:00 m. a 10:00 p. m.</p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
