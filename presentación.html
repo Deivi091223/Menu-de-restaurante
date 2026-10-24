@@ -133,27 +133,21 @@ const precio      = descripcion.nextElementSibling; // span (hermano del hermano
 <!-- ============ 4 ============ -->
 <section class="slide">
   <h2>Delegación de eventos y CRUD</h2>
-  <p><strong>Un solo <code>addEventListener</code> en el contenedor <code>#app</code>.</strong> Desde <code>e.target</code> se sube hasta el botón y hasta su plato.</p>
+  <p><strong>Los archivos <code>usuario.js</code> y <code>admin.js</code> usan delegación de eventos en el contenedor <code>#app</code>.</strong> Cada archivo atiende solo sus acciones. Desde <code>e.target</code> se sube hasta el botón y hasta su plato.</p>
   <div class="box">
-    <p><strong>Analogía:</strong> un solo mesero en la entrada atiende a todas las mesas: mira quién lo llamó y va a la mesa correcta.</p>
+    <p><strong>Analogía:</strong> dos meseros especializados comparten la entrada: uno atiende al cliente y el otro al administrador; cada uno identifica la acción y va a la mesa correcta.</p>
   </div>
-  <pre><code>app.addEventListener("click", (e) => {
-  const boton = e.target.closest("button[data-accion]"); // ¿tocó un botón?
-  if (!boton) return;
+  <pre><code>// En admin.js y usuario.js se escucha desde el contenedor común.
+app.addEventListener("click", (evento) => {
+  // Encuentra el botón aunque el clic ocurra en un elemento dentro de él.
+  const boton = evento.target.closest("button[data-accion]");
+  if (!boton) return; // Ignora los clics que no sean de una acción.
 
-  const plato = boton.closest(".plato");   // su fila (null si no está en un plato)
+  // Encuentra la tarjeta del plato; puede ser null en botones generales.
+  const plato = boton.closest(".plato");
 
-  switch (boton.dataset.accion) {
-    case "alternar-admin": alternarModoAdmin(boton); break; // cliente ↔ administrador
-    case "guardar":  guardarPlato(); break;               // C (crear) o U (actualizar)
-    case "cancelar": limpiarFormulario(); break;
-    case "editar":   cargarEnFormulario(plato); break;    // U: llena el formulario
-    case "eliminar": eliminarPlato(plato); break;         // D: plato.remove()
-    case "agregar":  agregarAlPedido(plato); break;       // suma el plato al pedido
-    case "quitar":   boton.closest("li").remove(); break; // del botón a su &lt;li&gt;
-    case "vaciar":   listaPedido.replaceChildren(); break;
-    case "confirmar": /* avisa y vacía el pedido */ break;
-  }
+  // admin.js ejecuta CRUD; usuario.js gestiona carrito e historial.
+  // Cada archivo ignora las acciones que pertenecen al otro.
 });</code></pre>
   <table>
     <tr><th>CRUD en La Casona</th><th>Dónde / traversing usado</th></tr>
@@ -171,24 +165,33 @@ const precio      = descripcion.nextElementSibling; // span (hermano del hermano
 </div>
 
 <script>
-  // ---- Navegación de la presentación ----
+  // Navegación de las diapositivas de esta presentación.
   (function () {
+    // Guarda las diapositivas, el indicador de página y la posición actual.
     const slides = document.querySelectorAll(".slide");
     const count = document.getElementById("count");
     let actual = 0;
+
+    // Limita el índice, muestra una diapositiva y vuelve al inicio de la página.
     function mostrar(n) {
       actual = Math.max(0, Math.min(slides.length - 1, n));
       slides.forEach((s, i) => s.classList.toggle("active", i === actual));
       count.textContent = (actual + 1) + " / " + slides.length;
       window.scrollTo(0, 0);
     }
+
+    // Los botones permiten avanzar y retroceder entre las diapositivas.
     document.getElementById("prev").addEventListener("click", () => mostrar(actual - 1));
     document.getElementById("next").addEventListener("click", () => mostrar(actual + 1));
+
+    // Las flechas y las teclas de página navegan salvo que se esté escribiendo.
     document.addEventListener("keydown", (e) => {
       if (e.target.closest("input, textarea, select")) return;
       if (e.key === "ArrowRight" || e.key === "PageDown") mostrar(actual + 1);
       if (e.key === "ArrowLeft" || e.key === "PageUp") mostrar(actual - 1);
     });
+
+    // Inicia la presentación en la primera diapositiva.
     mostrar(0);
   })();
 </script>

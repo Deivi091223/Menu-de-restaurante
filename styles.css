@@ -426,6 +426,40 @@ button:focus-visible {
     gap: 10px;
 }
 
+/* ---------- Historial de pedidos confirmados ---------- */
+.historial-pedidos {
+    margin-top: 35px;
+    border-top: 1px solid var(--borde);
+    padding-top: 25px;
+}
+
+.historial-pedidos .seccion-titulo {
+    font-size: 1.7rem;
+    margin-bottom: 20px;
+}
+
+.pedidos-historial-vacio {
+    text-align: center;
+    font-style: italic;
+    color: var(--gris);
+}
+
+.pedido-anterior {
+    list-style: none;
+    border-bottom: 1px dotted var(--borde);
+    padding: 15px 0;
+}
+
+.pedido-anterior h3,
+.pedido-anterior p {
+    color: var(--vino);
+}
+
+.pedido-anterior ul {
+    list-style: disc;
+    margin: 8px 0 8px 22px;
+}
+
 /* ---------- Pie de página ---------- */
 .pie {
     background-color: var(--vino-oscuro);

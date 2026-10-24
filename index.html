@@ -34,7 +34,7 @@
                     <li><a href="#postres">Postres</a></li>
                     <li><a href="#bebidas">Bebidas</a></li>
                     <!-- solo-cliente: se oculta en modo administrador -->
-                    <li class="solo-cliente"><a href="#pedido">Mi pedido</a></li>
+                    <li class="solo-cliente"><a href="#pedido">Mis pedidos</a></li>
                 </ul>
             </nav>
         </header>
@@ -295,7 +295,7 @@
                 El total está en span.total-valor, hermano de span.total-texto.
             -->
             <section id="pedido" class="pedido solo-cliente">
-                <h2 class="seccion-titulo">Mi pedido</h2>
+                <h2 class="seccion-titulo">Mis pedidos</h2>
 
                 <p class="pedido-vacio">Aún no has agregado platos.</p>
 
@@ -312,6 +312,12 @@
                     <button type="button" class="btn-vaciar" data-accion="vaciar">Vaciar pedido</button>
                     <button type="button" class="btn-confirmar" data-accion="confirmar">Confirmar pedido</button>
                 </div>
+
+                <div class="historial-pedidos">
+                    <h2 class="seccion-titulo">Pedidos anteriores</h2>
+                    <p class="pedidos-historial-vacio">Aún no has confirmado pedidos.</p>
+                    <ul id="historial-pedidos"></ul>
+                </div>
             </section>
 
         </main>
@@ -324,6 +330,7 @@
 
     </div>
 
-    <script src="script.js"></script>
+    <script src="usuario.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>
